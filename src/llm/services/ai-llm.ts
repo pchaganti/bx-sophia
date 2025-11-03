@@ -14,7 +14,7 @@ import {
 } from 'ai';
 import { addCost, agentContext } from '#agent/agentContextLocalStorage';
 import { cloneAndTruncateBuffers } from '#agent/trimObject';
-import { appContext } from '#app/applicationContext';
+import { ApplicationContext } from '#app/applicationTypes';
 import { BaseLLM, type BaseLlmConfig } from '#llm/base-llm';
 import { type CreateLlmRequest, callStack } from '#llm/llmCallService/llmCall';
 import { logger } from '#o11y/logger';
@@ -43,6 +43,14 @@ import { quotaRetry } from '#utils/quotaRetry';
 
 type GenerateTextArgs = Parameters<typeof generateText>[0];
 type StreamTextArgs = Parameters<typeof streamText>[0];
+
+// Lazy load to fix dependency cycle
+let _appContextModule: typeof import('#app/applicationContext') | undefined;
+function appContext(): ApplicationContext {
+	_appContextModule ??= require('#app/applicationContext');
+	if (!_appContextModule) throw new Error('appContext not initialized');
+	return _appContextModule.appContext();
+}
 
 // Helper to convert DataContent | URL to string for our UI-facing models
 function convertDataContentToString(content: string | URL | Uint8Array | ArrayBuffer | Buffer | undefined): string {
